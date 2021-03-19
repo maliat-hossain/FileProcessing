@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <Favorite_books>
+   <book id="1">
+     <title>Opeksha</title>
+    <authors>
+       <author>Humayun Ahmed</author>
+    </authors>    
+	<attributes>Plot,Charecter Devlopment<attributes> 
+  <Favorite_books>
+  <book id="2">
+    <title>Separation Anxiety</title>
+    <authors>
+      <author>Laura Zigman</author>
+    </authors>
+	<attributes>Plot,Relatable Charecter<attributes>
+   <Favorite_books>
+   <book id="3">
+    <title>Freakonomics</title>
+     <authors>
+      <author>Steven Levitt</author>
+      <author>Stephen J. Dubner</author>
+     </authors>
+     <attributes>Gripping Factor<attributes>
+   </book/>
+ </Favorite_books>
