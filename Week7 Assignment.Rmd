@@ -1,0 +1,59 @@
+---
+title: "Untitled"
+author: "Maliat Islam"
+date: "3/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+### I have picked three of my favorite books. After creating html,xml,and Json file Ihave exported them in R Studio.
+```{r}
+install.packages("httr",repos = "http://cran.us.r-project.org")
+library(httr)
+library(bitops)
+library(RCurl)
+library(dplyr)
+library(tidyverse)
+library(XML)
+library(xml2)
+library(rvest)
+library(RJSONIO)
+library(knitr)
+library(stringr)
+
+
+```
+
+
+
+```{r}
+install.packages("htmltab",repos = "http://cran.us.r-project.org")
+library(htmltab)
+```
+
+
+
+```{r}
+url<-("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/new%2016%20book.html")
+HTMLBOOKdf<-htmltab(url)
+
+view(HTMLBOOKdf)
+
+```
+```{r}
+xml_books<-read_file("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/new%2016XML.xml")
+xmlbookdf<-xmlToDataFrame(xml_books)
+View(xmlbookdf)
+```
+
+```{r}
+jSON_books<-fromJSON("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/new%2016json.json")
+JSONbookdf<-as.data.frame(jSON_books)
+view(JSONbookdf)
+```
+
+### All of the data frames created by HTML,XML and Json looks similar.
