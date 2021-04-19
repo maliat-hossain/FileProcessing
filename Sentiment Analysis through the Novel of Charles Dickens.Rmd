@@ -1,0 +1,249 @@
+---
+title: "Charles Dickens's Novel Analysis"
+author: "Maliat Islam"
+date: "4/18/2021"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+### sentiment Analysis:
+#### For this project I have chosen Charles Dicken's literary work. I have analyzed "A Tale of Two Cities","Great Expectation","A christmas carol","Oliver Twist","Hard Times". I have used gutenbergr library to download these books.
+#### This assignment focuses on opinion mining.When human readers approach a text, we use our understanding of the emotional intent of words to infer whether a section of text is positive or negative, or perhaps characterized by some other more nuanced emotion like surprise or disgust. We can use the tools of text mining to approach the emotional content of text programmatically,
+#### The codes from Sentiment analysis with tidy data from Text Mining with R have been implemented on my chosen corpus.
+
+
+
+```{r}
+library(dplyr)
+library(tm)
+library(purrr)
+library(tidytext)
+library(gutenbergr)
+library(ggplot2)
+```
+```{r}
+library(kableExtra)
+```
+
+```{r}
+dickens <- gutenberg_download(c(98, 1400, 46, 730, 786))
+```
+#### Firstly the data has been loaded and tockenized,and stopwords are removed.
+```{r}
+tidy_dickens <- dickens %>%
+  mutate(
+    linenumber = row_number()) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+```
+
+
+
+
+```{r}
+tidy_dickens %>%
+  count(word, sort = TRUE)
+```
+
+#### bing package is used to observe the emotions in these five novels.
+```{r}
+bing_word_counts <- tidy_dickens %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+bing_word_counts 
+```
+#### nrc is used to project sentiments.
+
+```{r}
+nrc_word_counts <- tidy_dickens %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+nrc_word_counts
+
+```
+#### Presence of bing,nrc, afinn in Dickens's work
+```{r}
+library(tidyverse)
+new_afinn <- tidy_dickens %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 5) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+new_bing_and_nrc1 <- bind_rows(
+  tidy_dickens %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  tidy_dickens %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 5, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+
+  
+```
+```{r}
+bind_rows(new_afinn, 
+          new_bing_and_nrc1) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+#### Sentiment analysis is getting implemented in Tale of Two Cities.Three dictionaries have been compared.It refers the net sentiment (positive - negative) in each chunk of the novel text for each sentiment lexicon.All of them are added together for visualization.
+
+```{r}
+A_tale_of_two_cities <- tidy_dickens %>% 
+  filter(tidy_dickens$gutenberg_id == "98")
+A_tale_of_two_cities
+
+
+```
+```{r}
+afinn1 <- A_tale_of_two_cities %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 5) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+bing_and_nrc1 <- bind_rows(
+  A_tale_of_two_cities %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  A_tale_of_two_cities %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 5, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+
+```
+
+```{r}
+bind_rows(afinn1, 
+          bing_and_nrc1) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+#### Most common positive and negative words:
+```{r}
+bing_word_counts2 <- tidy_dickens %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+bing_word_counts2
+```
+
+
+```{r}
+bing_word_counts2 %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+
+#### WordClouds
+```{r}
+library(wordcloud)
+set.seed(123) # for reproducibility 
+tidy_dickens %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100,
+          rot.per=0.35,
+          colors=brewer.pal(7, "Accent")))
+```
+
+```{r}
+library(reshape2)
+
+tidy_dickens %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("red", "blue"),
+                   max.words = 100)
+```
+```{r}
+A_tale_of_two_cities %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("red", "blue"),
+                   max.words = 100)
+```
+```{r}
+library(sentimentr)
+library(tidyverse)
+
+```
+
+#### I have incorporated addtional Sentiment lexicon named Sentimentr. It is designed by Tyler Rinker to quickly calculate text polarity sentiment at the sentence level and optionally aggregate by rows or grouping variable(s).
+#### "A Tale of Two Cities have one of the most hearwrenching emdings I have ever read. Although Sydney Carton does not express his words before getting executed at the guillotine, Dickens ends the novel imagining what he might have said. The hypothetical farewell speech is the amalgamation of all the human emotions possible. A sence of optimism for a better future along with pain, diasappoinment,anger,regret. His whole hypothetical speech seems very euphric to me. I just wanted to see how I can identify these beautifully embedded emotions through Sentimentr through its analysis of polarity of sentiments.
+
+```{r}
+
+text<-("I see a beautiful city and a brilliant people rising from this abyss, and, in their struggles to be truly free, in their triumphs and defeats, through long, long years to come, I see the evil of this time and of the previous time of which this is the natural birth, gradually making expiation for itself and wearing out.I see the lives for which I lay down my life, peaceful, useful, prosperous and happy, in that England which I shall see no more. I see Her with a child upon her bosom, who bears my name. I see her father, aged and bent, but otherwise restored, and faithful to all men in his healing office, and at peace; I see the good old man, so long their friend, in ten years' time enriching them with all he has, and passing tranquilly to his reward.I see that I hold a sanctuary in their hearts, and in the hearts of their descendants, generations hence. I see her, an old woman, weeping for me on the anniversary of this day. I see her and her husband, their course done, lying side by side in their last earthly bed, and I know that each was not more honoured and held sacred in the other's soul, than I was in the souls of both.I see that child who lay upon her bosom and who bore my name, a man winning his way up in that path of life which once was mine. I see him winning it so well, that my name is made illustrious there by the light of his. I see the blots I threw upon it, faded away. I see him, foremost of just judges and honoured men, bringing a boy of my name, with a forehead that I know and golden hair, to this place - then fair to look upon, with not a trace of this day's disfigurement - and I hear him tell the child my story, with a tender and a faltering voice.
+It is a far, far better thing that I do, than I have ever done; it is a far, far better rest that I go to, than I have ever known." )
+
+sentiment(text)
+
+sentiment_by(text, by = NULL)
+
+emotional_analysis<-emotion(text)
+emotional_analysis
+```
+#### Using the Sentimentr package I have also analyzed 2012 presidential debate.Positive and Negative emotions from the debate is identified. The dataset is accessed from the GitHub page of Sentimentr package.
+```{r}
+debates <- presidential_debates_2012  
+
+debates%>%
+  get_sentences() %>%
+  sentiment() -> debate_sentiments
+
+debate_sentiments %>%
+  ggplot()+geom_density(aes(sentiment))
+
+debate_sentiments %>%
+  mutate(polarity_level=ifelse(sentiment>0, "Positive","Negative"))%>%
+  count(person,polarity_level)%>%
+  ggplot()+geom_col(aes(x=person,y=n,fill=polarity_level))
+```
+
+### Sources
+### 1.Robinson, J. S. and D. (n.d.). Text mining with r: A tidy approach. https://www.tidytextmining.com/sentiment.html.↩︎
+### 2. Rinker, T. (n.d.). Trinker/sentimentr. Retrieved April 19, 2021, from https://github.com/trinker/sentimentr
+
+
+
+
+
+
