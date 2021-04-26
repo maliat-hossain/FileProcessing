@@ -1,0 +1,53 @@
+---
+title: "Recommender System"
+author: "Maliat Islam"
+date: "4/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+##  Recommender System 
+
+### Discussion Prompt
+
+### Your task is to analyze an existing recommender system that you find interesting.
+
+### You should:
+
+### 1. Perform a Scenario Design analysis as described below. Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization’s customers.
+### 2.Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.
+### 3.Include specific recommendations about how to improve the site’s recommendation capabilities going forward.
+### 4.Create your report using an R Markdown file, and create a discussion thread with a link to the GitHub repo where your Markdown file notebook resides. You are not expected to need to write code for this discussion assignment.
+
+
+
+### Scenario Design
+
+### For this Discussion I have chosen to discuss about Spotify.Spotify is a Digital, cloud-based music platform that provides cross-device access to over 50 million songs, and a rapidly-rising number of podcasts and videos. Founded in Stockholm in 2008.
+### Who are your targeted users?
+### Millenials are the prominent users of spotify. Millenials belong to the age group of 25 to 34. Spotify's app is really user friendly. it is available in ios, android and windows system as well. Spotify mostly tatgets millenials and Genaration Z.
+### What are their key goals?
+### Spotify aims to provide music entertainment to it's listeners. Their motto is to let listeners listen to music what they want and when they want.Spotify acts a personal radio.
+### How can you help them accomplish these goals?
+### Easy access to account set up.
+### Displaying top ranked songs,and podcasts.
+### Providing the option to like any songs or podcasts so that a playlist can becreated.
+### Understanding users preferrence and suggesting music or podcast according to that preference.
+
+### Reverse Engineer:
+### Sopity has devloped a mathematical model to understand the relationship between artist and listeners. Spotify maps out every musical genre based on their interrelatedness. Spotify's recommender system works based on user's historic interactions.
+### There are three recommendation models at work on Spotify:
+### Collaborative filtering: Uses your behavior and that of similar users.
+### Natural Language Processing (NLP): For song lyrics, playlists, blog posts, social media comments.
+### Audio models: Used on raw audio.
+### Recommendations:
+### Out of Box Suggestions:
+### Sopifys tracks user's preference meticulously. It relies heavily on repeatation. Every users have their own preferance to music. However, music has various categories. Spotify has a tendency to only present the favorite categories of its users. It will be great if it can recommend out of box categories once a while, which can enrich user's experience.
+### References:
+
+### Ciocca. (2017). How Does Spotify Know You So Well? Medium. https://medium.com/s/story/spotifys-discover-weekly-how-machine-learning-finds-your-new-music-19a41ab76efe
