@@ -1,0 +1,204 @@
+---
+title: "Ham or Spam"
+author: "Maliat Islam"
+date: "4/30/2021"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### A process to identify apar or non spam email really essential.The purpose of this project is to classify new “test” documents using already classified “training” documents. A common example is using a corpus of labeled spam and ham (non-spam) e-mails to predict whether or not a new document is spam.
+### For this project I have started with the example corpus from blackboard.I have used the easy ham and esy spam  unzipped file. After downloading the file I have extracted them using 7-zip.
+
+
+
+
+```{r}
+library(tm)
+library(RTextTools)
+library(knitr)
+library(tidyverse)
+library(kableExtra)
+library(magrittr)
+library(data.table)
+library(e1071)
+library(caret)
+```
+### Loading Data:
+### After loading the data in the R environment,list.files is utilized in the spam_folder object which produces a charecter vector of the names of the files in the named directory. The data is transformed into a dataframe.After specifying the column name lapply function is used.unnest() is used to  handle list-columns that contain atomic vectors, lists, or data frames however not a mixture of the different types.spam_folder is also organized using the same process.
+
+Similarly we follow this process for our spam_folder contents.
+```{r}
+spam_folder <- "C:\\Users\\malia\\OneDrive\\Desktop\\MSDS DATA 607\\spamham\\spam_2"
+ham_folder <- "C:\\Users\\malia\\OneDrive\\Desktop\\MSDS DATA 607\\spamham\\easy_ham"
+
+length(list.files(path = spam_folder))
+length(list.files(path = ham_folder))
+```
+
+
+
+```{r}
+spam_files <- list.files(path = spam_folder, full.names = TRUE)
+ham_files <- list.files(path = ham_folder, full.names = TRUE)
+
+spam <- list.files(path = spam_folder) %>%
+  as.data.frame() %>%
+  set_colnames("file") %>%
+  mutate(text = lapply(spam_files, read_lines)) %>%
+  unnest(c(text)) %>%
+  mutate(class = "spam",
+         spam = 1) %>%
+  group_by(file) %>%
+  mutate(text = paste(text, collapse = " ")) %>%
+  ungroup() %>%
+  distinct()
+            
+ham <- list.files(path = ham_folder) %>%
+  as.data.frame() %>%
+  set_colnames("file") %>%
+  mutate(text = lapply(ham_files, read_lines)) %>%
+  unnest(c(text)) %>%
+  mutate(class = "ham",
+         spam = 0) %>%
+  group_by(file) %>%
+  mutate(text = paste(text, collapse = " ")) %>%
+  ungroup() %>%
+  distinct()
+```
+### Tidying Data:
+### In this step I have used rbind for the elements of ham and spam.white spaces and punctuation from the dataframe is removed.
+
+```{r}
+ham_spam1 <- rbind(ham, spam) %>%
+  select(class,spam,file, text)
+
+ham_spam1$text <- ham_spam1$text %>%
+  str_replace(.,"[\\r\\n\\t]+", "")
+
+replacePunctuation <- content_transformer(function(x) {return (gsub("[[:punct:]]", " ", x))})
+ham_spam1
+
+
+
+```
+
+### Classification Model:
+### The initial split function from rsample is used.The strata argument ensures that the distribution of class is similar in the training set and testing set. Since the split uses random sampling,seed was set to reproduce results.
+
+```{r}
+library(tidymodels)
+
+set.seed(1234)
+
+
+email_split <- initial_split(ham_spam1, strata = class)
+
+ham_spam_train <- training(email_split)
+ham_spam_test <- testing(email_split)
+
+```
+### Recepie package from Tidymodel is implemented to create a specification of preprocessing steps to perform.These transformations are estimated (or “trained”) on the training set so that they can be applied in the same way on the testing set or new data at prediction time, without data leakage. I have initialized a set of preprocessing transformations with the recipe() function, using a formula expression to specify the variables, outcome plus predictor, along with the data set.
+```{r}
+ham_spam_rec<-recipe(class ~ text, data = ham_spam_train)
+```
+### textrecepies is used to handle text of the ham or spam emails. email text is tokenized with step_tokenize.. By default this uses tokenizers::tokenize_words(). Before calculating tf-idf  step_tokenfilter() is used to only keep the 1000 most frequent tokens, to avoid creating too many variables in the  first model. To finish,  step_tfidf() is used to compute tf-idf.
+```{r}
+
+library(textrecipes)
+
+ham_spam_rec <- ham_spam_rec %>%
+  step_tokenize(text) %>%
+  step_tokenfilter(text, max_tokens = 10) %>%
+  step_tfidf(text)
+
+```
+### tidymodels workflow() is created to bundle together modeling components.
+```{r}
+ham_spamworkflow<-workflow() %>%
+  add_recipe(ham_spam_rec)
+```
+### Naive Bayes model  which is available in the tidymodels package discrim is utlized. One of the main advantages of a naive Bayes model is its ability to handle a large number of features, such as those we deal with when using word count methods
+```{r}
+
+library(discrim)
+nb_spec <- naive_Bayes() %>%
+  set_mode("classification") %>%
+  set_engine("naivebayes")
+
+nb_spec
+```
+###Evaluation of the model:
+### Resampling is used to estimate the performance of the naive Bayes classification mode.I can do this using resampled data sets built from the training set.  cross 10-fold cross-validation sets is created and these resampled sets is used for performance estimates.
+### Each of these splits contains information about how to create cross-validation folds from the original training data. In this example, 90% of the training data is included in each fold and the other 10% is held out for evaluation.For convenience, let’s again use a workflow() for our resampling estimates of performance.
+```{r}
+
+library(naivebayes)
+nb_fit <- ham_spamworkflow %>%
+  add_model(nb_spec) %>%
+  fit(data = ham_spam_train)
+```
+
+
+```{r}
+set.seed(234)
+ham_spam_folds <- vfold_cv(ham_spam_train)
+
+ham_spam_folds
+```
+```{r}
+nb_wf <- workflow() %>%
+  add_recipe(ham_spam_rec) %>%
+  add_model(nb_spec)
+
+nb_wf
+```
+###  To estimate how well that model performs, let’s fit the model many times, once to each of these resampled folds, and then evaluate on the heldout part of each resampled fold.
+```{r}
+nb_rs <- fit_resamples(
+  nb_wf,
+  ham_spam_folds,
+  control = control_resamples(save_pred = TRUE)
+)
+```
+### The relevant information is extracted using collect_metrics() and collect_predictions().
+```{r}
+nb_rs_metrics <- collect_metrics(nb_rs)
+nb_rs_predictions <- collect_predictions(nb_rs)
+```
+### The default performance parameters for binary classification are accuracy and ROC AUC (area under the receiver operator characteristic curve). For these resamples, the average accuracy is 82.4%.
+```{r}
+nb_rs_metrics
+```
+### ROC curve, shows  a visualization of how well a classification model can distinguish between classes.
+```{r}
+nb_rs_predictions %>%
+  group_by(id) %>%
+  roc_curve(truth = class, .pred_ham) %>%
+  autoplot() +
+  labs(
+    color = NULL,
+    title = "ROC curve for Ham or Spam email",
+    subtitle = "Each resample fold is shown in a different color"
+  )
+```
+
+
+###  The  model is evaluated using confusion matrix. A confusion matrix tabulates a model’s false positives and false negatives for each class. The function conf_mat_resampled() computes a separate confusion matrix for each resample and takes the average of the cell counts.The confusion metrix rows refer the prediction and column refers the information we already had regarding the ham spam data set.The True positive rate(188.7) of identifying non spam  is high and the True negative (55.4)of identifying spam email is high as well.
+
+```{r}
+conf_mat_resampled(nb_rs, tidy = FALSE) %>%
+  autoplot(type = "heatmap")
+```
+
+
+###  It can be concluded that the Naive Bayes model from the Tidymodel has performed well with an accuracy rate of 82.4 along with a high True positive value in the confusionmatrix.
+###  References:
+###  Silge, E. H. A. J. (2021, April 29). Chapter 7 Classification | Supervised Machine Learning for Text Analysis in R. Supervised Machine Learning Text Analysis in R. https://smltar.com/mlclassification.html#comparetolasso
+
+
+
