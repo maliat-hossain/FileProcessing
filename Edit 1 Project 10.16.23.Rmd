@@ -1,0 +1,455 @@
+---
+title: "Capstone Prediction Model"
+author: "Maliat I"
+date: "2023-10-08"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+dataanae<-read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_TABLE_1K._Ehrlichiosis_and_Anaplasmosis__Anaplasma_phagocytophilum_infection_to_Ehrlichia_chaffeensis_infection%20(1).csv")
+```
+
+```{r}
+head(dataanae)
+```
+```{r}
+dataanae_selected_columns22 <- dataanae[, 1:4]
+```
+### 2014
+```{r}
+dataanae14<-read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_Table_II._Ehrlichiosis_Anaplasmosis.csv")
+```
+
+```{r}
+dataanae_14 <- dataanae14[, 1:4]
+```
+### 215
+```{r}
+datanae15<- read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_Table_II._Ehrlichiosis_Anaplasmosis%20(3).csv")
+```
+
+```{r}
+dataanae_15 <- datanae15[, 1:4]
+```
+
+```{r}
+head(dataanae_15)
+```
+```{r}
+summary(dataanae_15)
+```
+
+```{r}
+summary(dataanae_14)
+```
+### Changing column names
+```{r}
+colnames(dataanae_14)[4] <- "Ehrlichiosis_Anaplasmosis_Cases"
+```
+
+```{r}
+colnames(dataanae_15)[4] <- "Ehrlichiosis_Anaplasmosis_Cases15"
+```
+
+
+```{r}
+ggplot(dataanae_15, aes(x = MMWR.Week, y = Ehrlichiosis_Anaplasmosis_Cases15)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Ehrlichiosis & Anaplasmosis Cases by Week in 2015", x = "Week", y = "Number of Cases")
+```
+
+
+```{r}
+ggplot(dataanae_14, aes(x = MMWR.Week, y = Ehrlichiosis_Anaplasmosis_Cases)) +
+  geom_bar(stat = "identity", fill = "green") +
+  labs(title = "Ehrlichiosis & Anaplasmosis Cases by Week in 2014", x = "Week", y = "Number of Cases")
+```
+
+```{r}
+dataanae16<-read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_Table_II._Ehrlichiosis_Anaplasmosis%20(4).csv")
+```
+
+
+
+
+```{r}
+dataanae_16 <- dataanae16[, 1:4]
+```
+
+
+```{r}
+colnames(dataanae_16)[4] <- "Ehrlichiosis_Anaplasmosis_Cases16"
+```
+
+```{r}
+ggplot(dataanae_16, aes(x = MMWR.Week, y = Ehrlichiosis_Anaplasmosis_Cases16)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  labs(title = "Ehrlichiosis & Anaplasmosis Cases by Week in 2016", x = "Week", y = "Number of Cases")
+```
+### 2018 Datasets
+```{r}
+dataanae18<-read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_Table_II._Ehrlichiosis_and_Anaplasmosis__Ehrlichia_ewingii_infection_to_Undetermined%202018.csv")
+dataanae_18 <- dataanae18[, 1:4]
+colnames(dataanae_18)[4] <- "Ehrlichiosis_Anaplasmosis_Cases18"
+```
+
+```{r}
+ggplot(dataanae_18, aes(x = MMWR.Week, y = Ehrlichiosis_Anaplasmosis_Cases18)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  labs(title = "Ehrlichiosis & Anaplasmosis Cases by Week in 2018", x = "Week", y = "Number of Cases")
+```
+### 2017 Dataset
+
+```{r}
+dataanae17<-read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_Table_II._Ehrlichiosis_and_Anaplasmosis.csv")
+dataanae_17 <- dataanae17[, 1:4]
+colnames(dataanae_17)[4] <- "Ehrlichiosis_Anaplasmosis_Cases17"
+```
+
+```{r}
+ggplot(dataanae_17, aes(x = MMWR.Week, y = Ehrlichiosis_Anaplasmosis_Cases17)) +
+  geom_bar(stat = "identity", fill = "pink") +
+  labs(title = "Ehrlichiosis & Anaplasmosis Cases by Week in 2017", x = "Week", y = "Number of Cases")
+```
+
+
+
+### Missing Data:
+#### Creating List of Datasets to Look for Missing data:
+
+```{r}
+dataset_list <- list(dataanae_14, dataanae_15,dataanae_16,dataanae_18,dataanae_17)
+```
+
+```{r}
+summarize_missing <- function(dataanae_14) {
+  dataanae_14 %>%
+    gather(key = "variable", value = "value") %>%
+    summarise(Missing_Values = sum(is.na(value)))
+}
+```
+
+```{r}
+missing_data_summary <- dataset_list %>%
+  map(summarize_missing)
+```
+
+
+
+```{r}
+print(missing_data_summary)
+```
+### Missing Values in the data sets refers to weeks where no cases were reported. The analysis will replace blank cells with 0.
+
+```{r}
+
+dataset_list1 <- list(dataanae_14, dataanae_15,dataanae_16,dataanae_18,dataanae_17)
+dataset_list1 <- lapply(dataset_list1, function(df) {
+  df[is.na(df)] <- 0
+  return(df)
+})
+```
+
+```{r}
+head_list <- lapply(dataset_list1, head)
+print(head_list)
+```
+
+### Combining all the datasets
+
+
+```{r}
+# Rename the fourth column in all datasets to "new_common_name"
+dataset_list1 <- lapply(dataset_list1, function(df) {
+  colnames(df)[4] <- "Ehrlichiosis_Anaplasmosis_Cases_Count"
+  return(df)
+})
+```
+
+```{r}
+# Combine all datasets in dataset_list into a single dataset
+combined_dataset_disease1 <- do.call(rbind, dataset_list1)
+```
+
+```{r}
+view(combined_dataset_disease1)
+```
+### Checking for seasonality
+
+```{r}
+library(stats)
+```
+
+```{r}
+ts_list <- list()
+
+# Unique reporting areas in the data
+reporting_areas <- unique(combined_dataset_disease1$`Reporting.Area`)
+
+# Looping through each reporting area
+for (area in reporting_areas) {
+  # Subset the data for the current reporting area
+  subset_data <- combined_dataset_disease1[combined_dataset_disease1$`Reporting.Area` == area, ]
+
+  # Convert the relevant column to a numeric vector (replace 'CasesColumn')
+  cases_vector <- as.numeric(subset_data$`Ehrlichiosis_Anaplasmosis_Cases_Count`)
+
+  # Create a time series object with appropriate frequency (e.g., weekly)
+  ts_data <- ts(cases_vector, start = c(2014, 1), frequency = 52)  
+
+  # Store the time series object in the list
+  ts_list[[area]] <- ts_data
+}
+
+```
+
+```{r}
+# Loop through each time series in the list
+for (area in names(ts_list)) {
+  ts_data <- ts_list[[area]]
+  
+  # Check for non-finite x-axis values in the time series
+  if (any(!is.finite(time(ts_data)))) {
+    cat("Non-finite values in the x-axis of time series for", area, "\n")
+    
+  }
+  else {
+    # Plot the time series
+    plot(ts_data, xlab = "Time", ylab = "Values", main = paste("Time Series Plot for", area))
+  
+  }
+}
+```
+
+
+```{r}
+# Loop through each time series in the list
+for (area in names(ts_list)) {
+  ts_data <- ts_list[[area]]
+  
+  # Check for non-finite x-axis values in the time series
+  if (any(!is.finite(time(ts_data)))) {
+    cat("Non-finite values in the x-axis of time series for", area, "\n")
+   
+  }
+  else {
+   plot(ts_data, xlab = "Time", ylab = "Values", main = paste("Time Series Plot for", area),
+     col = c("blue", "orange", "green"))
+    
+  }
+}
+```
+
+
+```{r}
+ts_data <- na.omit(ts_data)
+
+```
+
+```{r}
+
+
+non_finite_values <- !is.finite(ts_data)
+
+print(non_finite_values)
+```
+
+```{r}
+# Define the small constant
+small_constant <- 1e-5
+
+# Iterate through the list and add the small constant to each time series
+for (area in names(ts_list)) {
+  ts_list[[area]] <- ts_list[[area]] + small_constant
+}
+```
+
+```{r}
+for (area in names(ts_list)) {
+  stl_result <- stl(ts_list[[area]], s.window = "periodic")
+  plot(stl_result$time.series[, "seasonal"], main = paste("Seasonal Component Plot for", area))
+}
+```
+
+### Checking for seasonality:
+
+
+
+```{r}
+# Initialize a data frame to store results
+seasonality_summary <- data.frame(State = character(0), SeasonalAutocorrelation = numeric(0))
+
+# Iterate through each state's time series
+for (area in names(ts_list)) {
+  ts_data <- ts_list[[area]]
+  
+  # Calculate autocorrelation at seasonal lag (52 weeks for weekly data)
+  acf_result <- acf(ts_data, lag.max = 52, plot = FALSE)
+  seasonal_autocorrelation <- acf_result$acf[52]
+  
+  # Check if the autocorrelation is significantly different from zero 
+  is_seasonal <- abs(seasonal_autocorrelation) > 0.2  
+  
+  # Add results to the summary data frame
+  seasonality_summary <- rbind(seasonality_summary, data.frame(State = area, SeasonalAutocorrelation = seasonal_autocorrelation, IsSeasonal = is_seasonal))
+}
+
+# Print the summary
+print(seasonality_summary)
+```
+
+
+```{r}
+
+library(ggseas)
+```
+
+### Seasonality L jung test
+### Checking for seasonality with significance value.
+
+```{r}
+
+ts_data <- na.omit(ts_data)
+ljung_box_test <- Box.test(ts_data, lag = 12, type = "Ljung-Box")
+
+# Check the p-value from the test
+p_value <- ljung_box_test$p.value
+
+# Set a significance level (e.g., 0.05)
+alpha <- 0.05
+
+
+
+# Check if the p-value is less than the significance level
+# Check if p_value is not missing and less than the significance level
+if (!is.na(p_value) && p_value < alpha) {
+  cat("The time series data exhibits seasonality (rejects the null hypothesis)\n")
+} else {
+  cat("The time series data does not exhibit seasonality (fails to reject the null hypothesis)\n")
+}
+```
+### Failed to create the ARIMA. Therefore, creating the Poisson Regression
+
+```{r}
+
+# Create a subset, excluding weeks with zero cases
+subset_data <- combined_dataset_disease1[combined_dataset_disease1$Ehrlichiosis_Anaplasmosis_Cases_Count > 0, ]
+```
+
+
+```{r}
+# Fit a Poisson Regression model using your existing data
+model <- glm(Ehrlichiosis_Anaplasmosis_Cases_Count ~ MMWR.Year, data = subset_data, family = poisson)
+
+# Create a dataframe for future years (2019, 2020, 2021, 2022, and 2023)
+future_years <- data.frame(MMWR.Year = c(2019, 2020, 2021, 2022, 2023))
+
+# Predict Anaplasmosis cases for each reporting area for future years
+predicted_counts <- predict(model, newdata = future_years, type = "response")
+
+# Create a new dataframe with reporting areas and predicted counts
+future_predictions <- data.frame(
+  Reporting.Area = rep(unique(subset_data$Reporting.Area), each = length(future_years$MMWR.Year)),
+  MMWR.Year = rep(future_years$MMWR.Year, times = length(unique(subset_data$Reporting.Area))),
+  Predicted_Count = rep(predicted_counts, times = length(unique(subset_data$Reporting.Area)))
+)
+
+# View the predictions for all reporting areas for future years
+print(future_predictions)
+```
+```{r}
+set.seed(123)  # Set a seed for reproducibility
+train_size <- 0.8
+train_index <- sample(1:nrow(subset_data), round(train_size * nrow(subset_data)))
+train_data <- subset_data[train_index, ]
+test_data <- subset_data[-train_index, ]
+
+# Fit a Poisson Regression model using the training data
+model <- glm(Ehrlichiosis_Anaplasmosis_Cases_Count ~ MMWR.Year, data = train_data, family = poisson)
+
+# Make predictions on the test data
+test_predictions <- predict(model, newdata = test_data, type = "response")
+
+# Calculate evaluation metrics
+mae <- mean(abs(test_predictions - test_data$Ehrlichiosis_Anaplasmosis_Cases_Count))
+mse <- mean((test_predictions - test_data$Ehrlichiosis_Anaplasmosis_Cases_Count)^2)
+rmse <- sqrt(mse)
+
+cat("Mean Absolute Error (MAE):", mae, "\n")
+cat("Mean Squared Error (MSE):", mse, "\n")
+cat("Root Mean Squared Error (RMSE):", rmse, "\n")
+
+# Perform a deviance goodness-of-fit test
+null_model <- glm(Ehrlichiosis_Anaplasmosis_Cases_Count ~ 1, data = train_data, family = poisson)
+deviance_test <- anova(null_model, model, test = "Chisq")
+print(deviance_test)
+
+
+```
+
+```{r}
+library(ggplot2)
+
+# Create a line plot of predicted counts over time for each reporting area
+ggplot(data = future_predictions, aes(x = MMWR.Year, y = Predicted_Count, group = Reporting.Area, color = Reporting.Area)) +
+  geom_line() +
+  labs(title = "Predicted Anaplasmosis Cases Over Time by Reporting Area",
+       x = "Year",
+       y = "Predicted Count") +
+  scale_color_discrete(name = "Reporting Area") +  # Legend title
+  theme(legend.position = "top")  # Move the legend to the top
+```
+
+```{r}
+library(ggplot2)
+
+# Create a grouped bar plot for each unique reporting area
+ggplot(data = future_predictions, aes(x = as.factor(MMWR.Year), y = Predicted_Count)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "blue") +
+  labs(title = "Predicted Anaplasmosis Cases by Year",
+       x = "Year",
+       y = "Predicted Count") +
+  scale_fill_discrete(name = "Reporting Area") +  # Legend title
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels
+  facet_wrap(~ Reporting.Area, ncol = 4)  # Create separate plots for each reporting area, 4 columns per row
+```
+
+
+
+
+
+
+
+
+### Cryptosporidiosis
+
+```{r}
+Disease2Main<-read.csv("https://raw.githubusercontent.com/maliat-hossain/FileProcessing/main/NNDSS_-_Table_1I._Cryptosporidiosis_to_Cyclosporiasis%202020.csv")
+Disease2_20 <- Disease2Main[, 1:4]
+colnames(Disease2_20)[4] <- "Cryptosporidiosis_Cases18"
+```
+
+```{r}
+ggplot(Disease2_20, aes(x = MMWR.Week, y = Cryptosporidiosis_Cases18)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(title = "Cryptosporidiosis Cases in 2020", x = "Week", y = "Number of Cases")
+```
+```{r}
+
+```
+
